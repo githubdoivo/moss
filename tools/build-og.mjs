@@ -16,8 +16,9 @@ const server = createServer(async (req, res) => {
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 await page.goto(`http://localhost:${server.address().port}/`, { waitUntil: "networkidle" });
-await page.addStyleTag({ content: ".foot { display: none !important; }" });
-await page.waitForTimeout(6500);
+// At preview size only the essentials fit: the title, the specimen, two panels.
+await page.addStyleTag({ content: ".foot, .feed, .gauge, .transmission { display: none !important; } .hud { grid-template-areas: \"title . growth\" \"id . growth\" \"map . .\" !important; grid-template-rows: auto auto 1fr !important; }" });
+await page.waitForTimeout(9500);
 await page.screenshot({ path: join(root, "og-image.png") });
 await browser.close();
 server.close();

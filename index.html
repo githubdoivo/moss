@@ -3,42 +3,91 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>MOSS · soon</title>
-  <meta name="description" content="MOSS, DJ and producer. Something is growing in the swamp. Soon.">
+  <title>MOSS · signal acquired</title>
+  <meta name="description" content="MOSS, DJ and producer. Specimen MOSS-01 is germinating. Something is growing. Soon.">
   <meta property="og:title" content="MOSS">
-  <meta property="og:description" content="Something is growing in the swamp. Soon.">
+  <meta property="og:description" content="Specimen MOSS-01 is germinating. Something is growing. Soon.">
   <meta property="og:url" content="https://moss.ivolopes.com">
   <meta property="og:type" content="website">
-  <meta property="og:image" content="https://moss.ivolopes.com/og-image.png">
+  <meta property="og:image" content="https://moss.ivolopes.com/og-image.png?v=2">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://moss.ivolopes.com">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="theme-color" content="#050a07">
+  <meta name="theme-color" content="#000000">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@300;400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- The swamp: mist, fireflies and still water, drawn on a canvas. -->
-  <canvas id="swamp" aria-hidden="true"></canvas>
+  <!-- The specimen: a bloom overgrown with moss, ferns and small flowers,
+       growing live on a canvas (specimen.js). -->
+  <canvas id="specimen" aria-hidden="true"></canvas>
 
+  <div class="hud">
+    <header class="title">
+      <h1 class="wordmark">MOSS</h1>
+      <p class="role">DJ · PRODUCER</p>
+      <p class="caption">something is growing in the swamp.</p>
+    </header>
 
-  <main class="stage">
-    <h1 class="wordmark" aria-label="MOSS"><span>M</span><span>O</span><span>S</span><span>S</span></h1>
-    <p class="role">dj · producer</p>
-    <p class="line">something is growing in the swamp.</p>
-    <p class="soon">soon</p>
-  </main>
+    <section class="panel id-card" aria-label="Specimen record">
+      <h2>SPECIMEN // MOSS-01</h2>
+      <dl>
+        <div><dt>CLASS</dt><dd>BRYOPHYTA / AUDIO</dd></div>
+        <div><dt>ORIGIN</dt><dd>PORTO 41.15N 8.61W</dd></div>
+        <div><dt>STATUS</dt><dd class="blink">GERMINATING</dd></div>
+      </dl>
+    </section>
 
-  <footer class="foot">
-    <a href="mailto:mail@ivolopes.com">mail@ivolopes.com</a>
-    <span aria-hidden="true">·</span>
-    <a href="https://ivolopes.com">ivolopes.com</a>
-  </footer>
+    <section class="panel growth" aria-label="Growth log">
+      <h2>GROWTH LOG <span>T+<span id="clock">00:00</span></span></h2>
+      <table>
+        <tbody>
+          <tr><th>HUMIDITY</th><td id="v-hum">98.2</td><td>%</td></tr>
+          <tr><th>COVERAGE</th><td id="v-cov">00.0</td><td>%</td></tr>
+          <tr><th>ROOT FREQ</th><td>42.0</td><td>HZ</td></tr>
+          <tr><th>TEMPO</th><td>124</td><td>BPM</td></tr>
+          <tr><th>SIGNAL</th><td id="v-sig">-48</td><td>DB</td></tr>
+        </tbody>
+      </table>
+    </section>
 
-  <script src="swamp.js"></script>
+    <section class="panel feed" aria-hidden="true">
+      <h2>TELEMETRY</h2>
+      <ol id="feed"></ol>
+    </section>
+
+    <section class="panel gauge" aria-hidden="true">
+      <h2>CYCLE</h2>
+      <canvas id="gauge"></canvas>
+    </section>
+
+    <section class="panel map" aria-hidden="true">
+      <h2>SURVEY // SWAMP-04</h2>
+      <canvas id="map"></canvas>
+    </section>
+
+    <section class="panel transmission" aria-label="Transmission">
+      <h2>TRANSMISSION</h2>
+      <canvas id="spectrum" aria-hidden="true"></canvas>
+      <p class="soon"><span class="blink">●</span> SOON</p>
+    </section>
+
+    <footer class="foot">
+      <a href="mailto:mail@ivolopes.com">MAIL@IVOLOPES.COM</a>
+      <span aria-hidden="true">//</span>
+      <a href="https://ivolopes.com">IVOLOPES.COM</a>
+    </footer>
+  </div>
+
+  <div class="reticle" id="reticle" aria-hidden="true"><span id="coords"></span></div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <script src="specimen.js"></script>
+  <script src="hud.js"></script>
 </body>
 </html>
