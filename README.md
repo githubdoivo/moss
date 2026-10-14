@@ -2,17 +2,19 @@
 
 [![CI](https://github.com/githubdoivo/moss/actions/workflows/ci.yml/badge.svg)](https://github.com/githubdoivo/moss/actions/workflows/ci.yml)
 
-**MOSS**: DJ and producer. For now, a "soon" page styled as a botanical
-specimen scan in a green-phosphor terminal:
+**MOSS**: DJ and producer. For now, a "soon" page: specimen MOSS-01, a living
+bloom drifting in deep space, seen through the curved glass of a visor.
 
-- `specimen.js` grows specimen MOSS-01 live on a canvas: a pale, glazed,
-  ceramic-like bloom opens, fuzzy moss cushions creep around it, ferns
-  unfurl and small white flowers open, with a scan line sweeping over it.
-- `hud.js` runs the terminal around it: live growth log (moss coverage counts
-  up as it grows), telemetry feed, a 124 BPM gauge, a generated swamp survey
-  map, a spectrum, and a reticle that tracks the pointer with coordinates.
-- Film grain, scanlines and a vignette in CSS. No libraries.
+- `assets/plate-*.jpg`: the scene behind the glass (space, planet, asteroids,
+  the visor itself), one framing for desktop and one for phones.
+- `assets/bloom-*.webp`: the bloom on its own, so it can float, sway and
+  breathe, with a green scan passing over it.
+- Everything else is live HTML/SVG in `index.html`: the pixel-LCD wordmark,
+  the telemetry (sky position, hull, growth, spores), callouts that follow the
+  bloom, a waveform pulsing at 124 BPM, and a cursor that scans frequencies
+  and locks onto the bloom.
 
-With "reduce motion" on, the specimen is drawn once, fully grown.
+The images were generated as layers edited out of one design mockup, so they
+match each other. With "reduce motion" on, nothing moves.
 
 `npm test` runs the Playwright tests; `npm run og` re-renders the link preview.

@@ -1,29 +1,38 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-test("the page renders with no errors, and the specimen is alive", async ({ page }) => {
+const inView = (box, vp) => box && box.x >= 0 && box.y >= 0 && box.x + box.width <= vp.width && box.y + box.height <= vp.height;
+
+test("the page renders with no errors: plate, bloom, wordmark and contact", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  page.on("requestfailed", (r) => errors.push(`failed: ${r.url()}`));
   await page.goto("/");
-  await expect(page.locator(".wordmark")).toHaveText("MOSS");
-  await expect(page.locator(".soon")).toContainText("SOON");
-  await expect(page.locator("a[href='mailto:mail@ivolopes.com']")).toBeVisible({ timeout: 8000 });
-  const frames = () => page.locator("#specimen").evaluate((c) => +c.dataset.frames || 0);
-  const before = await frames();
-  await page.waitForTimeout(500);
-  expect(await frames(), "the specimen should keep animating").toBeGreaterThan(before);
+  await expect(page.locator("#plate")).toHaveJSProperty("complete", true);
+  expect(await page.locator("#plate").evaluate((i) => i.naturalWidth)).toBeGreaterThan(0);
+  expect(await page.locator("#flower").evaluate((i) => i.complete && i.naturalWidth > 0)).toBe(true);
+  await expect(page.locator(".word svg[aria-label='MOSS']")).toBeAttached();
+  await expect(page.locator(".hud")).toContainText("TRANSMISSION");
+  await expect(page.locator("a[href='mailto:mail@ivolopes.com']")).toBeVisible();
   expect(errors).toEqual([]);
 });
 
-test("with reduced motion the specimen is one still frame, fully grown", async ({ browser }) => {
-  const context = await browser.newContext({ reducedMotion: "reduce" });
-  const page = await context.newPage();
+test("the readouts are live", async ({ page }) => {
   await page.goto("/");
-  await page.waitForTimeout(600);
-  expect(await page.locator("#specimen").evaluate((c) => c.dataset.frames)).toBe("1");
-  // Drawn fully grown straight away.
-  expect(await page.locator("#specimen").evaluate((c) => c.dataset.coverage)).toBe("100.0");
-  await context.close();
+  const read = () => page.locator(".hud").innerText();
+  const first = await read();
+  await expect.poll(read, { timeout: 6000 }).not.toBe(first);
+});
+
+test("the HUD stays on screen in a short browser window (Safari bars showing)", async ({ page }) => {
+  for (const vp of [{ width: 390, height: 640 }, { width: 390, height: 844 }, { width: 1280, height: 640 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(vp);
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    for (const sel of ["a[href^='mailto']", ".word", "#ra", ".hud .t.r"]) {
+      expect(inView(await page.locator(sel).first().boundingBox(), vp), `${sel} at ${vp.width}x${vp.height}`).toBe(true);
+    }
+  }
 });
 
 test("nothing scrolls sideways on a narrow phone", async ({ page }) => {
@@ -32,8 +41,35 @@ test("nothing scrolls sideways on a narrow phone", async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
 });
 
-test("no serious accessibility problems once the text has faded in", async ({ browser }) => {
-  // Scan the settled page: mid-fade text would read as low contrast.
+test("double-clicking selects nothing (no purple selection over the scene)", async ({ page }) => {
+  await page.goto("/");
+  const vp = page.viewportSize();
+  await page.mouse.dblclick(vp.width / 2, vp.height / 2);
+  await page.mouse.click(vp.width / 2, vp.height / 2, { clickCount: 3 });
+  expect(await page.evaluate(() => String(getSelection()))).toBe("");
+});
+
+test("the cursor scans frequencies and locks onto the bloom", async ({ page, isMobile }) => {
+  test.skip(isMobile, "pointer only");
+  await page.goto("/");
+  await page.mouse.move(40, 450);
+  await expect(page.locator("#coords")).toContainText("HZ");
+  const b = await page.locator("#bloom").boundingBox();
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 5 });
+  await expect(page.locator("#coords")).toContainText("LIFEFORM LOCKED", { timeout: 4000 });
+});
+
+test("with reduced motion nothing moves, and the page is still complete", async ({ browser }) => {
+  const context = await browser.newContext({ reducedMotion: "reduce" });
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(page.locator(".word svg")).toBeAttached();
+  const moving = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === "running" && a.effect?.getComputedTiming().iterations === Infinity).length);
+  expect(moving).toBe(0);
+  await context.close();
+});
+
+test("no serious accessibility problems", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();
   await page.goto("/");
@@ -42,19 +78,7 @@ test("no serious accessibility problems once the text has faded in", async ({ br
   await context.close();
 });
 
-test("the specimen grows: moss coverage rises to 100% over the first seconds", async ({ page }) => {
+test("no ceramic wording anywhere (biology and technology only)", async ({ page }) => {
   await page.goto("/");
-  const cov = () => page.locator("#specimen").evaluate((c) => parseFloat(c.dataset.coverage || "0"));
-  await page.waitForTimeout(1500);
-  const early = await cov();
-  expect(early).toBeLessThan(100);
-  await expect.poll(cov, { timeout: 12000 }).toBe(100);
-  await expect(page.locator("#v-cov")).toHaveText("100.0");
-});
-
-test("on a phone, the extra panels step aside for the specimen", async ({ page, isMobile }) => {
-  test.skip(!isMobile, "phone layout only");
-  await page.goto("/");
-  for (const sel of [".feed", ".gauge", ".map"]) await expect(page.locator(sel)).toBeHidden();
-  for (const sel of [".id-card", ".growth", ".transmission"]) await expect(page.locator(sel)).toBeVisible();
+  expect(await page.content()).not.toMatch(/ceramic|clay|glaze/i);
 });
