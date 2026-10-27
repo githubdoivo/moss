@@ -82,3 +82,60 @@ test("no ceramic wording anywhere (biology and technology only)", async ({ page 
   await page.goto("/");
   expect(await page.content()).not.toMatch(/ceramic|clay|glaze/i);
 });
+
+test("Portuguese: the whole HUD is translated, and the page says it is Portuguese", async ({ page }) => {
+  await page.goto("/?lang=pt");
+  await expect(page.locator("html")).toHaveAttribute("lang", "pt");
+  await expect(page).toHaveTitle("MOSS · sinal captado");
+  const hud = page.locator(".hud");
+  await expect(hud).toContainText("TRANSMISSÃO");
+  await expect(hud).toContainText("PRODUTOR");
+  for (const en of ["TRANSMISSION", "PRODUCER", "SOON"]) await expect(hud).not.toContainText(en);
+  await expect(page.locator("main.sr")).toContainText("DJ e produtor");
+});
+
+test("the language switch goes to the other language and is remembered", async ({ page }) => {
+  await page.goto("/?lang=en");
+  const sw = page.locator("a.lang");
+  await expect(sw).toHaveAttribute("href", "?lang=pt");
+  await expect(sw).toHaveAccessibleName("Ver em português");
+  await sw.click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "pt");
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("lang", "pt");
+  await page.locator("a.lang").click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+});
+
+test("a Portuguese browser gets Portuguese on the first visit", async ({ browser }) => {
+  const context = await browser.newContext({ locale: "pt-PT" });
+  const page = await context.newPage();
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("lang", "pt");
+  await context.close();
+});
+
+test("in both languages the switch and the email stay on screen", async ({ page }) => {
+  for (const vp of [{ width: 390, height: 640 }, { width: 1440, height: 900 }]) {
+    await page.setViewportSize(vp);
+    for (const lang of ["en", "pt"]) {
+      await page.goto(`/?lang=${lang}`);
+      for (const sel of ["a.lang", "a[href^='mailto']", ".tx"]) {
+        expect(inView(await page.locator(sel).first().boundingBox(), vp), `${sel} ${lang} ${vp.width}`).toBe(true);
+      }
+    }
+  }
+});
+
+test("only the email and the language switch are links: MOSS links nowhere else", async ({ page }) => {
+  await page.goto("/");
+  const hrefs = await page.$$eval("a[href]", (as) => as.map((a) => a.getAttribute("href")));
+  for (const h of hrefs) expect(h).toMatch(/^(mailto:mail@ivolopes\.com|\?lang=(en|pt))$/);
+});
+
+test("Portuguese has no serious accessibility problems", async ({ page }) => {
+  await page.goto("/?lang=pt");
+  const { violations } = await new AxeBuilder({ page }).analyze();
+  const serious = violations.filter((v) => ["serious", "critical"].includes(v.impact));
+  expect(serious.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+});

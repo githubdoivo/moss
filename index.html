@@ -82,7 +82,13 @@
   .tx { font-size: calc(var(--h) * .02); letter-spacing: .2em; color: var(--g2); opacity: .92; }
   .mail { font-size: calc(var(--h) * .016); letter-spacing: .16em; color: var(--g); opacity: .9; pointer-events: auto; }
   .bpm { color: var(--g); opacity: .9; letter-spacing: .12em; }
-  .mail:hover { color: #fff; }
+  .mail:hover, .lang:hover { color: #fff; }
+  :lang(pt) .tx { letter-spacing: .1em; }
+  :lang(pt) .role { letter-spacing: .4em; }
+  .lang { pointer-events: auto; font-size: calc(var(--h) * .015); letter-spacing: .3em; color: var(--g2); opacity: .9; padding: .5em .8em; }
+  .lang b { font-weight: 500; }
+  .lang .dim { opacity: .45; }
+  .lang:focus-visible { outline: 1px solid var(--g); outline-offset: 2px; }
   .mail:focus-visible { outline: 1px solid var(--g); outline-offset: 6px; }
   .tri { display: inline-block; width: 0; height: 0; margin-right: .9em; vertical-align: .05em; border-left: .62em solid currentColor; border-top: .4em solid transparent; border-bottom: .4em solid transparent; opacity: .9; filter: drop-shadow(0 0 4px rgba(130, 255, 140, .7)); }
   .bracket { position: absolute; font-size: calc(var(--h) * .0135); line-height: 1.5; letter-spacing: .1em; padding-left: 1em; color: var(--dim); opacity: .95; text-shadow: 0 0 2px rgba(114, 157, 120, .4); }
@@ -146,6 +152,46 @@
 
 <script>
 (function () {
+  // Language: ?lang=, then the visitor's last choice, then the browser.
+  const STR = {
+    en: {
+      lang: "en", other: "?lang=pt", switchLabel: "Ver em português", title: "MOSS · signal acquired",
+      sr: "DJ and producer. A living specimen, MOSS-01, blooming in deep space. First transmission soon. Contact: mail@ivolopes.com",
+      ra: "RA", dec: "DEC", drift: "DRIFT", hull: "HULL", exposure: "EXPOSURE",
+      role: "DJ · PRODUCER", tx: "TRANSMISSION", soon: "SOON",
+      c1: "SPECIMEN · MOSS-01<br>BRYOPHYTA ASTRALIS<br>BLOOM · 4 PETALS OPEN",
+      c2: 'SPORES · <b id="spores">ACTIVE</b><br>PHOTOSYNTHESIS OK<br>GROWTH +<b id="growth">0.40</b> MM/H',
+      b1: "AUDIO LINK<br>CARRIER 42 HZ<br>LOCKED", b2: "BIOSCAN<br>VITALS STABLE<br>CELL CYCLE 124",
+      active: "ACTIVE", release: "RELEASE",
+      locked: "LIFEFORM LOCKED · MOSS-01<br><small>PULSE 124 BPM · ROOT NOTE A1</small>",
+    },
+    pt: {
+      lang: "pt", other: "?lang=en", switchLabel: "View in English", title: "MOSS · sinal captado",
+      sr: "DJ e produtor. Um espécime vivo, MOSS-01, a florescer no espaço profundo. Primeira transmissão em breve. Contacto: mail@ivolopes.com",
+      ra: "AR", dec: "DEC", drift: "DERIVA", hull: "CASCO", exposure: "EXPOSIÇÃO",
+      role: "DJ · PRODUTOR", tx: "TRANSMISSÃO", soon: "EM BREVE",
+      c1: "ESPÉCIME · MOSS-01<br>BRYOPHYTA ASTRALIS<br>FLOR · 4 PÉTALAS ABERTAS",
+      c2: 'ESPOROS · <b id="spores">ATIVOS</b><br>FOTOSSÍNTESE OK<br>CRESCIMENTO +<b id="growth">0.40</b> MM/H',
+      b1: "LIGAÇÃO ÁUDIO<br>PORTADORA 42 HZ<br>FIXADA", b2: "BIOSCAN<br>SINAIS VITAIS ESTÁVEIS<br>CICLO CELULAR 124",
+      active: "ATIVOS", release: "LIBERTAÇÃO",
+      locked: "FORMA DE VIDA FIXADA · MOSS-01<br><small>PULSO 124 BPM · NOTA RAIZ LÁ1</small>",
+    },
+  };
+  const qs = new URLSearchParams(location.search);
+  let saved = null;
+  try { saved = localStorage.getItem("lang"); } catch (_) {}
+  const pick = qs.get("lang") || saved || ((navigator.language || "").toLowerCase().startsWith("pt") ? "pt" : "en");
+  const T = STR[pick === "pt" ? "pt" : "en"];
+  if (qs.get("lang")) { try { localStorage.setItem("lang", T.lang); } catch (_) {} }
+  document.documentElement.lang = T.lang;
+  document.title = T.title;
+  document.querySelector("main.sr p").textContent = T.sr;
+  // The switch: the current language lit, the other one dim.
+  const LANG = T.lang === "en" ? `<b>EN</b> <span class="dim">/ PT</span>` : `<span class="dim">EN /</span> <b>PT</b>`;
+  const W = Math.max(T.ra.length, T.dec.length, T.drift.length) + 1, lab = (x) => x.padEnd(W, " ").replace(/ /g, "&nbsp;");
+  const TELE_L = `<div><span class="dim">${lab(T.ra)}</span><b id="ra">14H 07M</b></div><div><span class="dim">${lab(T.dec)}</span><b id="dec">−23.9°</b></div><div><span class="dim">${lab(T.drift)}</span><b id="drift">0.31</b> KM/S</div>`;
+  const TELE_R = `<div>${T.hull} <b id="hull">−148</b> °C</div><div>O₂ <b id="o2">92</b>%</div><div>${T.exposure} 1/124</div>`;
+
   // Positions are fractions of the plate (x of its width, y of its height).
   const LAYOUT = {
     desk: {
@@ -153,16 +199,17 @@
       bloom: { x: .53, y: .47, size: .84 },            // size: fraction of plate height
       ring: { r: .335 },
       hud: [
-        ["t", .085, .105, `<div><span class="dim">RA&nbsp;&nbsp;&nbsp;</span><b id="ra">14H 07M</b></div><div><span class="dim">DEC&nbsp;&nbsp;</span><b id="dec">−23.9°</b></div><div><span class="dim">DRIFT</span> <b id="drift">0.31</b> KM/S</div>`],
-        ["t r", .914, .105, `<div>HULL <b id="hull">−148</b> °C</div><div>O₂ <b id="o2">92</b>%</div><div>EXPOSURE 1/124</div>`],
+        ["t", .085, .105, TELE_L],
+        ["t r", .914, .105, TELE_R],
+        ["t c lang", .5, .05, LANG, T.other],
         ["t word", .071, .382, "WORDMARK"],
-        ["t role", .071, .455, "DJ · PRODUCER"],
-        ["t tx", .071, .525, `TRANSMISSION · <span class="blink">SOON</span>`],
+        ["t role", .071, .455, T.role],
+        ["t tx", .071, .525, `${T.tx} · <span class="blink">${T.soon}</span>`],
         ["mail t", .052, .615, `<span class="tri"></span>MAIL@IVOLOPES.COM`, "mailto:mail@ivolopes.com"],
-        ["t callout", .737, .248, "SPECIMEN · MOSS-01<br>BRYOPHYTA ASTRALIS<br>BLOOM · 4 PETALS OPEN", null, "c1"],
-        ["t callout", .8, .641, "SPORES · <b id=\"spores\">ACTIVE</b><br>PHOTOSYNTHESIS OK<br>GROWTH +<b id=\"growth\">0.40</b> MM/H", null, "c2"],
-        ["bracket", .072, .838, "AUDIO LINK<br>CARRIER 42 HZ<br>LOCKED"],
-        ["bracket r", .924, .838, "BIOSCAN<br>VITALS STABLE<br>CELL CYCLE 124"],
+        ["t callout", .737, .248, T.c1, null, "c1"],
+        ["t callout", .8, .641, T.c2, null, "c2"],
+        ["bracket", .072, .838, T.b1],
+        ["bracket r", .924, .838, T.b2],
         ["t bpm", .667, .867, "|&nbsp;&nbsp;124 BPM"],
       ],
       meter: [.071, .568, .13],
@@ -176,11 +223,12 @@
       bloom: { x: .5, y: .4, size: .43 },
       ring: { r: .2 },
       hud: [
-        ["t", .12, .085, `<div><span class="dim">RA&nbsp;&nbsp;&nbsp;</span><b id="ra">14H 07M</b></div><div><span class="dim">DEC&nbsp;&nbsp;</span><b id="dec">−23.9°</b></div><div><span class="dim">DRIFT</span> <b id="drift">0.31</b> KM/S</div>`],
-        ["t r", .88, .085, `<div>HULL <b id="hull">−148</b> °C</div><div>O₂ <b id="o2">92</b>%</div><div>EXPOSURE 1/124</div>`],
+        ["t", .12, .085, TELE_L],
+        ["t r", .88, .085, TELE_R],
+        ["t c lang", .5, .03, LANG, T.other],
         ["t c word", .5, .672, "WORDMARK"],
-        ["t c role", .5, .728, "DJ · PRODUCER"],
-        ["t c tx", .5, .778, `TRANSMISSION · <span class="blink">SOON</span>`],
+        ["t c role", .5, .728, T.role],
+        ["t c tx", .5, .778, `${T.tx} · <span class="blink">${T.soon}</span>`],
         ["t bpm", .64, .854, "|&nbsp;&nbsp;124 BPM"],
         ["mail t c", .5, .925, "MAIL@IVOLOPES.COM", "mailto:mail@ivolopes.com"],
       ],
@@ -229,7 +277,7 @@
   ["selectstart", "dragstart", "dblclick"].forEach((ev) => document.addEventListener(ev, (e) => e.preventDefault()));
   document.addEventListener("mousedown", (e) => { if (e.detail > 1) e.preventDefault(); });
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const q = new URLSearchParams(location.search);
+  const q = qs;
   const frozen = q.has("t") ? +q.get("t") : null;
   let L = null, S = 1, SW = 0, SH = 0, VW = 0, VH = 0;
 
@@ -252,7 +300,8 @@
         const tag = href ? "a" : "div";
         const style = cls.split(" ").includes("r") ? `right:${(1 - x) * 100}%;top:${y * 100}%` : `left:${x * 100}%;top:${y * 100}%`;
         if (html === "WORDMARK") html = WORDMARK;
-        return `<${tag} class="${cls}" style="${style}"${href ? ` href="${href}"` : ` aria-hidden="true"`}${id ? ` id="${id}"` : ""}>${html}</${tag}>`;
+        const label = cls.includes("lang") ? ` aria-label="${T.switchLabel}" lang="${T.lang === "en" ? "pt" : "en"}"` : "";
+        return `<${tag} class="${cls}" style="${style}"${href ? ` href="${href}"` : ` aria-hidden="true"`}${label}${id ? ` id="${id}"` : ""}>${html}</${tag}>`;
       }).join("");
     if (L.font) {
       const f = L.font;
@@ -344,7 +393,7 @@
     const hz = 20 * Math.pow(1000, Math.min(1, Math.max(0, mouse.x / innerWidth)));
     const db = Math.round(6 - (mouse.y / innerHeight) * 54);
     const f = hz >= 1000 ? `${(hz / 1000).toFixed(hz >= 10000 ? 1 : 2)} KHZ` : `${Math.round(hz)} HZ`;
-    coords.innerHTML = cur.lock > .6 ? "LIFEFORM LOCKED · MOSS-01<br><small>PULSE 124 BPM · ROOT NOTE A1</small>" : `${f}<br><small>${db > 0 ? "+" : ""}${db} DB</small>`;
+    coords.innerHTML = cur.lock > .6 ? T.locked : `${f}<br><small>${db > 0 ? "+" : ""}${db} DB</small>`;
   }
 
   /* ---------- Loop ---------- */
@@ -360,7 +409,7 @@
     set("hull", String(Math.round(-148 + Math.sin(t * .13) * 2)));
     set("o2", String(92 - Math.floor(t / 90) % 3));
     set("growth", (.4 + Math.sin(t * .25) * .03).toFixed(2));
-    set("spores", Math.floor(t * .5) % 7 === 0 ? "RELEASE" : "ACTIVE");
+    set("spores", Math.floor(t * .5) % 7 === 0 ? T.release : T.active);
     document.body.dataset.ready = "1";
     if (!still || frozen != null) requestAnimationFrame(frame);
   })(performance.now());
