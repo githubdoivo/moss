@@ -90,6 +90,8 @@
   .lang .dim { opacity: .45; }
   .lang:focus-visible { outline: 1px solid var(--g); outline-offset: 2px; }
   .mail:focus-visible { outline: 1px solid var(--g); outline-offset: 6px; }
+  /* Touch screens: a finger-sized hit area, same look */
+  @media (pointer: coarse) { .lang::after, .mail::after { content: ""; position: absolute; inset: -10px -4px; } }
   .tri { display: inline-block; width: 0; height: 0; margin-right: .9em; vertical-align: .05em; border-left: .62em solid currentColor; border-top: .4em solid transparent; border-bottom: .4em solid transparent; opacity: .9; filter: drop-shadow(0 0 4px rgba(130, 255, 140, .7)); }
   .bracket { position: absolute; font-size: calc(var(--h) * .0135); line-height: 1.5; letter-spacing: .1em; padding-left: 1em; color: var(--dim); opacity: .95; text-shadow: 0 0 2px rgba(114, 157, 120, .4); }
   .bracket::before { content: ""; position: absolute; left: 0; top: .1em; bottom: .1em; width: .45em; border: 1px solid var(--line); border-right: 0; opacity: .8; }
