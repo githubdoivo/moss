@@ -1,6 +1,6 @@
 # moss.ivolopes.com
 
-[![CI](https://github.com/githubdoivo/moss/actions/workflows/ci.yml/badge.svg)](https://github.com/githubdoivo/moss/actions/workflows/ci.yml)
+[![CI](https://github.com/githubdoivo/moss.ivolopes.com/actions/workflows/ci.yml/badge.svg)](https://github.com/githubdoivo/moss.ivolopes.com/actions/workflows/ci.yml)
 
 **MOSS**: DJ and producer. For now, a "soon" page: specimen MOSS-01, a living
 bloom drifting in deep space, seen through the curved glass of a visor.
